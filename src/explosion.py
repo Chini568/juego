@@ -3,7 +3,7 @@ from sprite_sheet import Sprites
 
 
 class Explosion(pygame.sprite.Sprite):
-    def __init__(self, groups, coordenadas ) -> None:
+    def __init__(self, groups, coordenadas) -> None:
         super().__init__(groups)
         self.sheet = Sprites(pygame.image.load("./src/assets/images/exp.png").convert_alpha(), 64, 64, 1, 16)
         self.animations = self.sheet.get_animation(2)

@@ -1,5 +1,4 @@
 import pygame
-# from config_clase import *
 
 class Sprites:
     def __init__(self, sheet:pygame.Surface, w_player, h_player, rows, cols, keys = None) -> None:

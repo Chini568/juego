@@ -3,50 +3,59 @@ from sprite_sheet import Sprites
 from pygame.locals import * 
 from config import *
 from explosion import Explosion
+from os import path
+from fireball import Fireball
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, groups, coordenadas, platforms, obst:list, cols:int ) -> None:
+    def __init__(self, groups, coordenadas, platforms, obst:list, cols:int, screen, enemies) -> None:
         super().__init__(groups)
-        self.groups = groups
+        self.coordenadas = coordenadas
+        self.screen = screen
+        self.enemies = enemies
         self.obst = obst
         self.cols = cols
         self.platforms = platforms
-        self.right = False
-        self.sheet = Sprites(pygame.image.load("./src/assets/images/playerknight_comp.png").convert_alpha(), WIDTH_PLAYER, HEIGHT_PLAYER, 6, 4 , ['jump_right', 'right', 'left', 'jump_left', 'idle_left', 'idle_right'])
-        self.animations = self.sheet.get_animation_dict(scale= 1.6)
+        self.groups = groups
+
+        self.direction = 'left'
+        self.damage = False
+
+        self.oof = pygame.mixer.Sound(path.abspath('./src/assets/sounds/oof.mp3'))
+        self.lives_img = pygame.transform.scale(pygame.image.load(path.abspath('./src/assets/images/vida.png')), (WIDTH_LIVES, HEIGHT_LIVES))
+        self.sheet = Sprites(pygame.image.load(path.abspath("./src/assets/images/shoot knight comp.png")).convert_alpha(), WIDTH_PLAYER, HEIGHT_PLAYER, 10, 4 , ['right', 'left', 'idle_left', 'idle_right', 'jump_right', 'jump_left', 'shoot_idle_right', 'shoot_idle_left', 'shoot_run_right', 'shoot_run_left'])
+        
         self.current_sprite = 0
+        self.animations = self.sheet.get_animation_dict(scale= 1.6)
         self.image = self.animations["idle_left"][self.current_sprite]
         self.rect = self.image.get_rect(center = coordenadas)
-        self.speed = 5 
-        self.last_update = pygame.time.get_ticks()
-        self.time_animation = 150
-        self.speed_v = 0
 
+        self.last_update = pygame.time.get_ticks()
+        self.last_damage_time = pygame.time.get_ticks()
+        self.last_shoot_time = pygame.time.get_ticks()
+
+        self.time_animation = 50
+        self.damage_cooldown = 1000  
+
+        self.shoot_cooldown = 3000
+
+        self.lives = 3
+        self.speed_v = 0
+        self.can_jump = True
+    
     def update(self):
         self.speed_v += GRAVITY 
         self.rect.y += self.speed_v
         if self.rect.bottom >= HEIGHT:
             self.rect.bottom = HEIGHT
-            self.speed_v = 0 
+            self.speed_v = 0
+            self.can_jump = True
 
-        
-        keys = pygame.key.get_pressed()
-        if keys[K_d] or keys[K_RIGHT]:
-            if self.rect.right <= WIDTH:
-                self.rect.x += self.speed
-                current_time = pygame.time.get_ticks()  
-                if current_time - self.last_update >= self.time_animation:
-                    self.current_sprite += 1
-                    self.image = self.animations['right'][self.current_sprite]
-                    self.mask = pygame.mask.from_surface(self.image)
-                    if self.current_sprite == self.cols - 1 :
-                        self.current_sprite = 0 
-                    self.last_update = current_time
-                    self.right = True
-                    
-        if keys[K_a] or keys[K_LEFT]:
+    def move(self):     
+        self.keys = pygame.key.get_pressed()
+        if self.keys[K_a] or self.keys[K_LEFT]:
+            self.direction = 'left'
             if self.rect.left >= 0:
-                self.rect.x -= self.speed
+                self.rect.x -= SPEED_PLAYER
                 current_time = pygame.time.get_ticks()  
                 if current_time - self.last_update >= self.time_animation:
                     self.current_sprite += 1
@@ -55,10 +64,51 @@ class Player(pygame.sprite.Sprite):
                     if self.current_sprite == self.cols - 1 :
                         self.current_sprite = 0 
                     self.last_update = current_time
-                    self.right = False
-        
+
+
+        elif self.keys[K_d] or self.keys[K_RIGHT]:
+            self.direction = 'right'
+            if self.rect.right <= WIDTH:
+                self.rect.x += SPEED_PLAYER
+                current_time = pygame.time.get_ticks()  
+                if current_time - self.last_update >= self.time_animation:
+                    self.current_sprite += 1
+                    self.image = self.animations['right'][self.current_sprite]
+                    self.mask = pygame.mask.from_surface(self.image)
+                    if self.current_sprite == self.cols - 1 :
+                        self.current_sprite = 0 
+                    self.last_update = current_time
+
+                    
+        elif self.keys[K_l] and self.direction == 'right':
+            current_time = pygame.time.get_ticks()  
+            if current_time - self.last_update >= self.time_animation:
+                self.current_sprite += 1
+                self.image = self.animations['shoot_idle_right'][self.current_sprite]
+                self.mask = pygame.mask.from_surface(self.image)
+                if self.current_sprite == self.cols - 1 :
+                    self.current_sprite = 0 
+                self.last_update = current_time
+                if current_time - self.last_shoot_time > self.shoot_cooldown:
+                    self.fireball = Fireball(self.groups, self.enemies, self.rect, self.direction, self.cols)
+                    self.last_shoot_time = current_time
+
+        elif self.keys[K_l] and self.direction == 'left':
+            current_time = pygame.time.get_ticks()  
+            if current_time - self.last_update >= self.time_animation:
+                self.current_sprite += 1
+                self.image = self.animations['shoot_idle_left'][self.current_sprite]
+                self.mask = pygame.mask.from_surface(self.image)
+                if self.current_sprite == self.cols - 1 :
+                    self.current_sprite = 0 
+                self.last_update = current_time
+                if current_time - self.last_shoot_time > self.shoot_cooldown:
+                    self.fireball = Fireball(self.groups, self.enemies, self.rect, self.direction, self.cols)
+                    self.last_shoot_time = current_time
+                
+                
         else:
-            if self.right:
+            if self.direction == 'right':
                 current_time = pygame.time.get_ticks()  
                 if current_time - self.last_update >= self.time_animation:
                     self.current_sprite += 1
@@ -76,34 +126,64 @@ class Player(pygame.sprite.Sprite):
                     if self.current_sprite == self.cols - 1 :
                         self.current_sprite = 0 
                     self.last_update = current_time
-                    
+
         for platform in self.platforms:
-            if pygame.sprite.collide_rect(self, platform):
-                if self.speed_v > 0:
+            if pygame.sprite.collide_rect(self, platform) and self.speed_v > 0:
                     self.on_platform = True
                     self.rect.bottom = platform.rect.top
                     self.speed_v = 0
-                    if keys[K_s] or keys[K_DOWN]:
+                    self.can_jump = True
+                    if self.keys[K_s] or self.keys[K_DOWN]:
                         self.rect.top = platform.rect.bottom
             else:
                 self.on_platform = False
                 
+    def lose_lives(self):
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_damage_time > self.damage_cooldown:
+            for obst in self.obst:
+                if pygame.sprite.collide_mask(self, obst) and not self.damage:
+                    if self.lives >=  1: 
+                        self.lives -= 1
+                        self.damage = True
+                        self.last_damage_time = current_time
+                        self.oof.play()
+                        if self.lives == 0:
+                            self.kill()
+                            Explosion(self.groups, self.rect.center)
+                        break
+  
+        else:
+            self.damage = False
 
-        for obst in self.obst:
-            if pygame.sprite.collide_mask(self, obst):
-                self.kill()
-                Explosion(self.groups, self.rect.center)
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_damage_time > self.damage_cooldown:
+            for enemy in self.enemies:
+                if pygame.sprite.collide_mask(self, enemy) and not self.damage:
+                    if self.lives >=  1: 
+                        self.lives -= 1
+                        self.damage = True
+                        self.last_damage_time = current_time
+                        self.oof.play()
+                        if self.lives == 0:
+                            self.kill()
+                            Explosion(self.groups, self.rect.center)
+                        break
+  
+        else:
+            self.damage = False
+
+    def draw_lives(self):
+        lives_x = 0
+        for _ in range(self.lives):
+            self.screen.blit(self.lives_img, (lives_x, 0))
+            lives_x += WIDTH_LIVES + 5
 
     def jump(self):
-        keys = pygame.key.get_pressed()
-        if self.speed_v == 0:
-            if keys[K_UP] or keys[K_SPACE] and keys[K_RIGHT] or keys[K_d]:
+        if self.speed_v == 0 and self.can_jump:
+            if self.keys[K_UP] or self.keys[K_SPACE]:
                 self.speed_v += JUMP
-                current_time = pygame.time.get_ticks()  
-                if current_time - self.last_update >= self.time_animation:
-                    self.current_sprite += 1
-                    self.image = self.animations['jump_right'][self.current_sprite]
-                    self.mask = pygame.mask.from_surface(self.image)
-                    if self.current_sprite == self.cols - 1 :
-                        self.current_sprite = 0 
-                    self.last_update = current_time
+                self.can_jump = False
+
+                
+        
