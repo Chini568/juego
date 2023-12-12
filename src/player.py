@@ -5,10 +5,12 @@ from config import *
 from explosion import Explosion
 from os import path
 from fireball import Fireball
+from pausa_y_terminar import *
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, groups, coordenadas, platforms, obst:list, cols:int, screen, enemies) -> None:
+    def __init__(self, groups, coordenadas, platforms, obst:list, cols:int, screen, enemies, boss) -> None:
         super().__init__(groups)
+        self.boss = boss
         self.coordenadas = coordenadas
         self.screen = screen
         self.enemies = enemies
@@ -23,10 +25,11 @@ class Player(pygame.sprite.Sprite):
         self.oof = pygame.mixer.Sound(path.abspath('./src/assets/sounds/oof.mp3'))
         self.lives_img = pygame.transform.scale(pygame.image.load(path.abspath('./src/assets/images/vida.png')), (WIDTH_LIVES, HEIGHT_LIVES))
         self.sheet = Sprites(pygame.image.load(path.abspath("./src/assets/images/shoot knight comp.png")).convert_alpha(), WIDTH_PLAYER, HEIGHT_PLAYER, 10, 4 , ['right', 'left', 'idle_left', 'idle_right', 'jump_right', 'jump_left', 'shoot_idle_right', 'shoot_idle_left', 'shoot_run_right', 'shoot_run_left'])
-        
+
         self.current_sprite = 0
         self.animations = self.sheet.get_animation_dict(scale= 1.6)
         self.image = self.animations["idle_left"][self.current_sprite]
+        self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect(center = coordenadas)
 
         self.last_update = pygame.time.get_ticks()
@@ -41,7 +44,11 @@ class Player(pygame.sprite.Sprite):
         self.lives = 3
         self.speed_v = 0
         self.can_jump = True
-    
+
+        self.exploto = False
+
+        self.fireball = None
+
     def update(self):
         self.speed_v += GRAVITY 
         self.rect.y += self.speed_v
@@ -50,6 +57,7 @@ class Player(pygame.sprite.Sprite):
             self.speed_v = 0
             self.can_jump = True
 
+  
     def move(self):     
         self.keys = pygame.key.get_pressed()
         if self.keys[K_a] or self.keys[K_LEFT]:
@@ -90,8 +98,9 @@ class Player(pygame.sprite.Sprite):
                     self.current_sprite = 0 
                 self.last_update = current_time
                 if current_time - self.last_shoot_time > self.shoot_cooldown:
-                    self.fireball = Fireball(self.groups, self.enemies, self.rect, self.direction, self.cols)
+                    self.fireball = Fireball(self.groups, self.enemies, self.rect, self, self.direction, self.cols, self.boss)
                     self.last_shoot_time = current_time
+                    sound_laser.play()
 
         elif self.keys[K_l] and self.direction == 'left':
             current_time = pygame.time.get_ticks()  
@@ -103,10 +112,10 @@ class Player(pygame.sprite.Sprite):
                     self.current_sprite = 0 
                 self.last_update = current_time
                 if current_time - self.last_shoot_time > self.shoot_cooldown:
-                    self.fireball = Fireball(self.groups, self.enemies, self.rect, self.direction, self.cols)
+                    self.fireball = Fireball(self.groups, self.enemies, self.rect, self, self.direction, self.cols, self.boss)
                     self.last_shoot_time = current_time
-                
-                
+                    sound_laser.play()
+               
         else:
             if self.direction == 'right':
                 current_time = pygame.time.get_ticks()  
@@ -137,6 +146,7 @@ class Player(pygame.sprite.Sprite):
                         self.rect.top = platform.rect.bottom
             else:
                 self.on_platform = False
+        
                 
     def lose_lives(self):
         current_time = pygame.time.get_ticks()
@@ -148,13 +158,19 @@ class Player(pygame.sprite.Sprite):
                         self.damage = True
                         self.last_damage_time = current_time
                         self.oof.play()
-                        if self.lives == 0:
-                            self.kill()
-                            Explosion(self.groups, self.rect.center)
-                        break
-  
-        else:
-            self.damage = False
+
+        if self.boss != None:                
+            if current_time - self.last_damage_time > self.damage_cooldown:
+                for fireballs_boss in self.boss.get_all_fireballs():
+                    if pygame.sprite.collide_mask(self, fireballs_boss) and not self.damage:
+                        if self.lives >= 1:
+                            self.lives -= 1
+                            self.damage = True
+                            self.last_damage_time = current_time
+                            self.oof.play()
+                           
+            else:
+                self.damage = False
 
         current_time = pygame.time.get_ticks()
         if current_time - self.last_damage_time > self.damage_cooldown:
@@ -164,15 +180,20 @@ class Player(pygame.sprite.Sprite):
                         self.lives -= 1
                         self.damage = True
                         self.last_damage_time = current_time
-                        self.oof.play()
-                        if self.lives == 0:
-                            self.kill()
-                            Explosion(self.groups, self.rect.center)
-                        break
-  
+                        self.oof.play()  
+                       
+                       
         else:
             self.damage = False
 
+        self.death()
+
+    def death(self):
+        if self.lives == 0 and not self.exploto:
+            self.kill()
+            Explosion(self.groups, self.rect.center)
+            self.exploto = True
+            
     def draw_lives(self):
         lives_x = 0
         for _ in range(self.lives):
@@ -185,5 +206,5 @@ class Player(pygame.sprite.Sprite):
                 self.speed_v += JUMP
                 self.can_jump = False
 
-                
+ 
         

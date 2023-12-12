@@ -1,23 +1,17 @@
 import pygame
-from os import path
-from config import *
 from pygame.locals import *
-from player import Player
-from platforms import Platform
-from obst import Obst
-from screen import StartScreen
-from pausa_y_terminar import mostrar_texto
-from enemy import Enemy
+from config import *
+from level_one import LevelOne
+from level_two import LevelTwo
+from level_three import LevelThree
 from level_menu import LevelMenu
-from fireball import Fireball
-
-
-
-
-class Game():
-    def __init__(self) -> None:
-        self.inicia_volumen = 0.5
-        pygame.mixer.music.set_volume(self.inicia_volumen)
+from screen import StartScreen
+from pausa_y_terminar import *
+ 
+pygame.init()
+class Game:
+    def __init__(self):
+        pygame.mixer.music.set_volume(0.5)
         pygame.display.set_caption("Juego final")
         pygame.display.set_icon(icon_path)
         self.clock = pygame.time.Clock()
@@ -25,76 +19,86 @@ class Game():
         self.running = True
         self.play = False
         self.hud = pygame.Rect(0, 0, WIDTH, HEIGHT // 12)
-        self.platforms = [
-            Platform([self.all_sprites], (500,450), WIDTH_PLATFORM, HEIGHT_PLATFORM),
-            Platform([self.all_sprites], (300,300), WIDTH_PLATFORM, HEIGHT_PLATFORM),
-            Platform([self.all_sprites], (WIDTH - WIDTH_PLATFORM,125), WIDTH_PLATFORM, HEIGHT_PLATFORM),
-            Platform([self.all_sprites], (500 ,160), WIDTH_PLATFORM, HEIGHT_PLATFORM)
-        ]
-        self.x_platform_1, self.y_platform_1  = self.platforms[0].rect.topleft
-        self.x_platform_2, self.y_platform_2  = self.platforms[1].rect.topleft
-        self.obst = [
-            Obst([self.all_sprites], (self.x_platform_1, self.y_platform_1 ), spike_image, 'up',WIDTH_PINCHE, HEIGHT_PINCHE),
-            Obst([self.all_sprites], (self.x_platform_2, self.y_platform_2), spike_image, 'up',WIDTH_PINCHE, HEIGHT_PINCHE),
-            Obst([self.all_sprites], (self.x_platform_2 + WIDTH_PINCHE, self.y_platform_2), spike_image, 'up',WIDTH_PINCHE, HEIGHT_PINCHE)
-        ]
-        self.enemies = [
-            Enemy([self.all_sprites], (0 + WIDTH_ENEMY, (HEIGHT - HEIGHT_ENEMY //  4) - 4   ), 6)
-        ]
-        self.player = Player([self.all_sprites], (WIDTH - WIDTH_PLAYER // 2, HEIGHT - HEIGHT_PLAYER // 2), self.platforms, self.obst, 4, screen, self.enemies)
+        self.menu = StartScreen(screen, font, bkg, self.play)
+        self.current_level = None
+        self.change_level = False
 
+    def select_level(self):
+        self.level_menu = LevelMenu(bkg, screen, font, True)
+        self.selected_level = self.level_menu.esperar_click_level('Level 1', 'Level 2', 'Level 3', blanco, azul)
+        if self.selected_level == 1:
+           return  LevelOne()
+        elif self.selected_level == 2:
+           return  LevelTwo()
+        elif self.selected_level == 3:
+           return  LevelThree()
 
     def run(self):
-        self.render_pause()
-        self.menu = StartScreen(screen, font, bkg, self.play)
-        self.menu.esperar_click('Play', 'Options', 'Exit', blanco, azul)
-        self.play = True
-        self.render_pause()
-        self.level_menu = LevelMenu(bkg, screen, font, self.play)
-        self.select_level = self.level_menu.esperar_click_level('Level 1', 'Level 2', 'Level 3', blanco, azul)
+        self.start_screen = StartScreen(screen, font, bkg, game.play)
+        self.start_screen.esperar_click('Play', 'Config', 'Exit', blanco, azul)
+        level_selected = self.select_level()
         pygame.mixer.music.play(-1)
+        self.current_level = level_selected
         self.running = True
+        self.player = level_selected.player
         while self.running:
-            self.tiempo = pygame.time.get_ticks() / 1000
+            self.time = pygame.time.get_ticks() / 1000
             self.handle_events()
+            if self.change_level:
+                self.current_level = self.select_level()
+                self.player = self.current_level.player
+                self.change_level = False
             self.update()
-            self.reder()
+            self.draw()
             self.clock.tick(FPS)
         self.close()
-        
 
     def handle_events(self):
         for e in pygame.event.get():
             if e.type == QUIT:
                 self.running = False
             if e.type == KEYDOWN:
-                if e.key == K_ESCAPE:
-                    self.menu.esperar_click_2( 'Continue', 'Exit',blanco, azul)
-        self.player.move()
-        self.player.jump()
+                if e.key == K_p:
+                    self.menu.esperar_click_2('Continue', 'Exit', blanco, azul)
 
+    def complete_level(self):
+        door_rect = self.current_level.door_rect
+        if self.player and door_rect and self.player.rect.colliderect(door_rect):
+            self.change_level = True
+            
     def update(self):
+        if self.player:
+            self.player.move()
+            self.player.lose_lives()
+            self.player.jump()
+            self.current_level.update()
+            self.complete_level()
+            if self.current_level.enemies:
+                for enemy in self.current_level.enemies:
+                    enemy.update()
+            if self.current_level.obst:
+                for obst in self.current_level.obst:
+                    obst.update()
+            if self.current_level.platforms:
+                for platform in self.current_level.platforms:
+                    platform.update()
         self.all_sprites.update()
-        self.player.lose_lives()   
 
-    def reder(self):
-        screen.blit(bkg, (0,0))
-        screen.blit(door, (WIDTH - WIDTH_PLATFORM // 2 , 125 - HEIGHT_DOOR))
+    def draw(self):
+        self.current_level.draw()
         self.all_sprites.draw(screen)
         pygame.draw.rect(screen, azul, self.hud)
-        self.player.draw_lives()
-        mostrar_texto(screen, f'Tiempo: {int(self.tiempo)}', font_low, (WIDTH // 2, 20), gris, None)
-        mostrar_texto(screen, f'{int()}', font_low, (WIDTH - 100 , 20), gris, None)
-        pygame.display.flip()
-
-    def render_pause(self):
-        screen.blit(bkg, (0,0))
+        mostrar_texto(screen, f'{int(self.time)}', font_low, (WIDTH // 2, 20), blanco, None)
+        mostrar_texto(screen, f'{int()}', font_low, (700, 20), blanco, None)
+        self.player.draw_lives()  
         pygame.display.flip()
 
     def close(self):
         pygame.quit()
 
-
 if __name__ == "__main__":
     game = Game()
     game.run()
+    
+        
+    

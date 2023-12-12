@@ -4,9 +4,12 @@ from sprite_sheet import Sprites
 from pygame.locals import *
 
 
+
 class Fireball(pygame.sprite.Sprite):
-    def __init__(self, groups, enemies:list, player_rect, direction, cols):
+    def __init__(self, groups, enemies:list, player_rect, player, direction, cols, boss):
         super().__init__(groups)
+        self.player = player
+        self.boss = boss
         self.cols = cols
         self.enemies = enemies
         self.direction = direction
@@ -19,7 +22,6 @@ class Fireball(pygame.sprite.Sprite):
         self.image = self.animations['idle'][self.current_sprite]
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
-
 
         if self.direction == 'right':
             self.rect.midright = (player_rect.midright[0] + 10, player_rect.midright[1] )
@@ -45,13 +47,19 @@ class Fireball(pygame.sprite.Sprite):
             if pygame.sprite.collide_mask(self, enemy):
                 self.enemies.remove(enemy)
                 enemy.kill()
+                sound_zombie_died.play()
                 self.kill()
                 self.fireball = False
-                self.score += 100
 
         if self.rect.right < 0 or self.rect.left > WIDTH:
             self.kill()
             self.fireball = False
+
+        if self.boss != None:
+            if pygame.sprite.collide_mask(self, self.boss):
+                self.boss.lives_boss -= 1
+                self.kill()
+
 
 
             

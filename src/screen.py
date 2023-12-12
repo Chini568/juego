@@ -36,7 +36,7 @@ class StartScreen(LevelMenu):
                             return None
                         elif self.button_config.collidepoint(cursor[0], cursor[1]):
                             self.esperar_click_2('Continue', 'Exit', blanco, azul)
-                        elif self.button_level.collidepoint(cursor[0], cursor[1]):
+                        elif self.button_exit.collidepoint(cursor[0], cursor[1]):
                             return terminar() 
             pygame.display.flip()
            

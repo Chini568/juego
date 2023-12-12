@@ -14,6 +14,7 @@ class LevelMenu:
 
     def esperar_click_level(self, texto_1, texto_2, texto_3,  color, segundo_color):
         while self.play:
+            screen.blit(bkg, (0,0))
             mostrar_texto(self.screen, 'Level Menu', self.font, (WIDTH //2, HEIGHT // 6), negro, None )
             crear_boton(self.screen, self.btn_1, texto_1, color, segundo_color)
             crear_boton(self.screen, self.btn_2, texto_2, color, segundo_color)
@@ -26,11 +27,11 @@ class LevelMenu:
                     if e.button == 1 :
                         cursor = e.pos
                         if self.btn_1.collidepoint(cursor[0], cursor[1]):
-                            self.level = 'levelone'
+                            self.level =1
                         elif self.btn_2.collidepoint(cursor[0], cursor[1]):
-                            self.level = 'leveltwo'
+                            self.level = 2
                         elif self.btn_3.collidepoint(cursor[0], cursor[1]):
-                            self.level = 'levelthree'
+                            self.level = 3
                     return self.level
             pygame.display.flip()
         

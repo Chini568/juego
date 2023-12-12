@@ -43,6 +43,10 @@ WIDTH_SLIDER = 200
 HEIGHT_SLIDER = 20
 
 BALL_SLIDER = (20,20)
+
+WIDTH_BOSS = 320
+HEIGHT_BOSS = 240
+
 #colores 
 negro = (0,0,0)
 gris = (200,200,200)
@@ -55,7 +59,6 @@ cyan = (52, 152, 219)
 violeta = (165, 105, 189)
 rosa = (255, 143, 231 )
 naranja = (255, 128, 0)
-colores = [rojo, amarillo, verde, cyan, violeta, rosa, naranja, azul, blanco, negro]
 
 #direccionesy cargas 
 pygame.init()
@@ -65,5 +68,11 @@ font = pygame.font.SysFont("32bit Regular", 75)
 font_low = pygame.font.SysFont("32bit Regular", 40)
 spike_image = path.abspath('./src/assets/images/spike2.png')
 bkg = pygame.image.load(path.abspath('./src/assets/images/back.jpg'))
+bkg_2 = pygame.transform.scale(pygame.image.load(path.abspath('./src/assets/images/bkg_2.png')), (WIDTH, HEIGHT))
 door = pygame.image.load(path.abspath('./src/assets/images/door.png'))
 icon_path = pygame.image.load(path.abspath('./src/assets/images/blastalot crouch.png'))
+sound_laser = pygame.mixer.Sound(path.abspath('./src/assets/sounds/laser.mp3'))
+sound_zombie = pygame.mixer.Sound(path.abspath('./src/assets/sounds/zombie.mp3'))
+sound_zombie_died = pygame.mixer.Sound(path.abspath('./src/assets/sounds/zombie_died.mp3'))
+sound_boss_shoot = pygame.mixer.Sound(path.abspath('./src/assets/sounds/boss shoot.ogg'))
+sound_boss_death = pygame.mixer.Sound(path.abspath('./src/assets/sounds/boss death.mp3'))
