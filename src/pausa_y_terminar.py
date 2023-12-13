@@ -40,3 +40,4 @@ def mostrar_texto(superficie, texto, fuente, cordenadas, color_fuente, color_fon
     rect_texto = superficie_texto.get_rect()
     rect_texto.center = cordenadas
     superficie.blit(superficie_texto, rect_texto)
+

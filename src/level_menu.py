@@ -2,6 +2,8 @@ import pygame
 from config import *
 from pausa_y_terminar import *
 
+
+
 class LevelMenu:
     def __init__(self, bkg, screen, font, play) -> None:
         self.play = play
@@ -36,3 +38,4 @@ class LevelMenu:
             pygame.display.flip()
         
 
+    

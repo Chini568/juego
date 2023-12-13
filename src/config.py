@@ -60,6 +60,7 @@ violeta = (165, 105, 189)
 rosa = (255, 143, 231 )
 naranja = (255, 128, 0)
 
+MULT_TIME = 100
 #direccionesy cargas 
 pygame.init()
 pygame.mixer.music.load(path.abspath('./src/assets/sounds/music.mp3'))

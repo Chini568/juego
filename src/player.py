@@ -6,6 +6,7 @@ from explosion import Explosion
 from os import path
 from fireball import Fireball
 from pausa_y_terminar import *
+from score import Score
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, groups, coordenadas, platforms, obst:list, cols:int, screen, enemies, boss) -> None:
@@ -49,6 +50,7 @@ class Player(pygame.sprite.Sprite):
 
         self.fireball = None
 
+        self.score = Score()
     def update(self):
         self.speed_v += GRAVITY 
         self.rect.y += self.speed_v
@@ -158,17 +160,18 @@ class Player(pygame.sprite.Sprite):
                         self.damage = True
                         self.last_damage_time = current_time
                         self.oof.play()
+                        self.score.restar_puntaje(100)
 
         if self.boss != None:                
             if current_time - self.last_damage_time > self.damage_cooldown:
                 for fireballs_boss in self.boss.get_all_fireballs():
-                    if pygame.sprite.collide_mask(self, fireballs_boss) and not self.damage:
+                    if (pygame.sprite.collide_mask(self, fireballs_boss) or pygame.sprite.collide_mask(self, self.boss)) and not self.damage:
                         if self.lives >= 1:
                             self.lives -= 1
                             self.damage = True
                             self.last_damage_time = current_time
                             self.oof.play()
-                           
+                            self.score.restar_puntaje(100)
             else:
                 self.damage = False
 
@@ -181,6 +184,7 @@ class Player(pygame.sprite.Sprite):
                         self.damage = True
                         self.last_damage_time = current_time
                         self.oof.play()  
+                        self.score.restar_puntaje(100)
                        
                        
         else:

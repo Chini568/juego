@@ -4,6 +4,9 @@ from config import *
 from boss_fireball import BossFireball
 from explosion import Explosion
 from pausa_y_terminar import *
+from score import Score
+
+
 
 class Boss(pygame.sprite.Sprite):
     def __init__(self, groups, coordenadas, scale):
@@ -27,6 +30,8 @@ class Boss(pygame.sprite.Sprite):
         self.image = self.boss_idle
         self.direction = 'idle'
         self.muerto = False
+
+        self.score = Score()
 
     def update(self):
         current_time = pygame.time.get_ticks()
@@ -76,16 +81,14 @@ class Boss(pygame.sprite.Sprite):
     
     def death_boss(self):
         if self.lives_boss == 0 and not self.muerto:
+            self.score.sumar_puntaje(500)
             self.kill()
             Explosion(self.groups, self.rect.center)
             sound_boss_death.play()
             self.muerto = True
-            self.show_victory_screen()
             
-    def show_victory_screen(self):
-        screen.fill((0, 0, 0))  # Puedes cambiar el color de fondo según tus preferencias
-        mostrar_texto(screen, "You Win!", font, (WIDTH // 2, 100), blanco, None)
-        pygame.display.flip()
+   
+    
 
     def get_all_fireballs(self):
         return self.fireballs

@@ -2,7 +2,7 @@ import pygame
 from config import *
 from sprite_sheet import Sprites
 from pygame.locals import *
-
+from score import Score
 
 
 class Fireball(pygame.sprite.Sprite):
@@ -22,7 +22,7 @@ class Fireball(pygame.sprite.Sprite):
         self.image = self.animations['idle'][self.current_sprite]
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
-
+        self.score = Score()
         if self.direction == 'right':
             self.rect.midright = (player_rect.midright[0] + 10, player_rect.midright[1] )
         else:
@@ -50,6 +50,7 @@ class Fireball(pygame.sprite.Sprite):
                 sound_zombie_died.play()
                 self.kill()
                 self.fireball = False
+                self.score.sumar_puntaje(100)
 
         if self.rect.right < 0 or self.rect.left > WIDTH:
             self.kill()
