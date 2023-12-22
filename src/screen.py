@@ -28,13 +28,16 @@ class StartScreen(LevelMenu):
             crear_boton(screen, self.button_play, texto_1, color, segundo_color)
             crear_boton(screen, self.button_config, texto_2, color, segundo_color)
             crear_boton(screen, self.button_exit, texto_3, color, segundo_color)
-            scores = self.sqlite_score.get_scores()
-            for i in range(3):
-                player_name, score = scores[i]
-                rect_score = pygame.Rect(WIDTH - 250 , (HEIGHT // 2 - 75) + (HEIGHT_BUTTON * i), 200, HEIGHT_BUTTON)
-                pygame.draw.rect(screen, blanco, rect_score)
-                pygame.draw.rect(screen, negro, rect_score, 2)
-                mostrar_texto(screen, f"{i + 1}. {player_name}: {score}",font_low, rect_score.center, negro, None)
+            try:
+                scores = self.sqlite_score.get_scores()
+                for i in range(3):
+                    player_name, score = scores[i]
+                    rect_score = pygame.Rect(WIDTH - 250 , (HEIGHT // 2 - 75) + (HEIGHT_BUTTON * i), 200, HEIGHT_BUTTON)
+                    pygame.draw.rect(screen, blanco, rect_score)
+                    pygame.draw.rect(screen, negro, rect_score, 2)
+                    mostrar_texto(screen, f"{i + 1}. {player_name}: {score}",font_low, rect_score.center, negro, None)
+            except:
+                pass
             for e in pygame.event.get():
                 self.txt_box.handle_event(e)
                 if e.type == pygame.QUIT:

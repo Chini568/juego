@@ -102,8 +102,8 @@ class Game:
         self.current_level.draw()
         self.all_sprites.draw(screen)
         pygame.draw.rect(screen, azul, self.hud)
-        mostrar_texto(screen, f'{int(self.time)}', font_low, (WIDTH // 2, 20), blanco, None)
-        mostrar_texto(screen, f'{int(self.score.obtener_puntaje())}', font_low, (700, 20), blanco, None)
+        mostrar_texto(screen, f'Time: {int(self.time)}', font_low, (WIDTH // 2, 20), blanco, None)
+        mostrar_texto(screen, f'Score: {int(self.score.obtener_puntaje())}', font_low, (700, 20), blanco, None)
         self.player.draw_lives()  
         pygame.display.flip()
 
